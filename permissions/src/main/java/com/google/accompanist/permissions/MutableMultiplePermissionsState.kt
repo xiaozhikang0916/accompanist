@@ -25,9 +25,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 
 /**
@@ -57,7 +55,6 @@ internal fun rememberMutableMultiplePermissionsState(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissionsResult ->
         multiplePermissionsState.updatePermissionsStatus(permissionsResult)
-        multiplePermissionsState.permissionRequested = true
     }
     DisposableEffect(multiplePermissionsState, launcher) {
         multiplePermissionsState.launcher = launcher
@@ -128,8 +125,6 @@ internal class MutableMultiplePermissionsState(
     override val shouldShowRationale: Boolean by derivedStateOf {
         permissions.any { it.shouldShowRationale }
     }
-
-    override var permissionRequested: Boolean by mutableStateOf(false)
 
     override fun launchMultiplePermissionRequest() {
         launcher?.launch(

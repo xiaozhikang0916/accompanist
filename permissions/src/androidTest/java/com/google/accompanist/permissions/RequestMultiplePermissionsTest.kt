@@ -23,6 +23,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -125,17 +129,25 @@ class RequestMultiplePermissionsTest {
                 android.Manifest.permission.CAMERA
             )
         )
+        var permissionsRequested by remember { mutableStateOf(false) }
+
         PermissionsRequired(
             multiplePermissionsState = state,
+            arePermissionsRequested = permissionsRequested,
             permissionsNotAvailableContent = { Text("Denied") },
-            permissionsNotGrantedContent = {
+            requestPermissionsContent = {
                 Column {
-                    if (state.permissionRequested) {
+                    if (permissionsRequested) {
                         Text("ShowRationale")
                     } else {
                         Text("No permission")
                     }
-                    Button(onClick = { state.launchMultiplePermissionRequest() }) {
+                    Button(
+                        onClick = {
+                            state.launchMultiplePermissionRequest()
+                            permissionsRequested = true
+                        }
+                    ) {
                         Text("Request")
                     }
                 }

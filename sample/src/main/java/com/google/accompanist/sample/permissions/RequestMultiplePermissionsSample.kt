@@ -16,10 +16,7 @@
 
 package com.google.accompanist.sample.permissions
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -55,16 +52,14 @@ class RequestMultiplePermissionsSample : ComponentActivity() {
                         android.Manifest.permission.CAMERA,
                     )
                 )
+                // Track if the permissions have been already requested to the user
+                // This should be saved in the data layer
+                var permissionsRequested by rememberSaveable { mutableStateOf(false) }
+
                 Sample(
                     multiplePermissionsState,
-                    navigateToSettingsScreen = {
-                        startActivity(
-                            Intent(
-                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.fromParts("package", packageName, null)
-                            )
-                        )
-                    }
+                    arePermissionsRequested = permissionsRequested,
+                    onPermissionsRequest = { permissionsRequested = true }
                 )
             }
         }
@@ -75,7 +70,8 @@ class RequestMultiplePermissionsSample : ComponentActivity() {
 @Composable
 private fun Sample(
     multiplePermissionsState: MultiplePermissionsState,
-    navigateToSettingsScreen: () -> Unit
+    arePermissionsRequested: Boolean,
+    onPermissionsRequest: () -> Unit
 ) {
     // Track if the user doesn't want to see the rationale any more.
     var doNotShowRationale by rememberSaveable { mutableStateOf(false) }
@@ -88,54 +84,43 @@ private fun Sample(
         // If the user denied any permission but a rationale should be shown, or the user sees
         // the permissions for the first time, explain why the feature is needed by the app and
         // allow the user decide if they don't want to see the rationale any more.
-        multiplePermissionsState.shouldShowRationale ||
-            !multiplePermissionsState.permissionRequested ->
-            {
-                if (doNotShowRationale) {
-                    Text("Feature not available")
-                } else {
-                    Column {
-                        val revokedPermissionsText = getPermissionsText(
-                            multiplePermissionsState.revokedPermissions
-                        )
-                        Text(
-                            "$revokedPermissionsText important. " +
-                                "Please grant all of them for the app to function properly."
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row {
-                            Button(
-                                onClick = {
-                                    multiplePermissionsState.launchMultiplePermissionRequest()
-                                }
-                            ) {
-                                Text("Request permissions")
+        multiplePermissionsState.shouldShowRationale || !arePermissionsRequested -> {
+            if (doNotShowRationale) {
+                Text("Feature not available")
+            } else {
+                Column {
+                    val revokedPermissionsText = getPermissionsText(
+                        multiplePermissionsState.revokedPermissions
+                    )
+                    Text(
+                        "$revokedPermissionsText important. " +
+                            "Please grant all of them for the app to function properly."
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row {
+                        Button(
+                            onClick = {
+                                multiplePermissionsState.launchMultiplePermissionRequest()
+                                onPermissionsRequest()
                             }
-                            Spacer(Modifier.width(8.dp))
-                            Button(onClick = { doNotShowRationale = true }) {
-                                Text("Don't show rationale again")
-                            }
+                        ) {
+                            Text("Request permissions")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Button(onClick = { doNotShowRationale = true }) {
+                            Text("Don't show rationale again")
                         }
                     }
                 }
             }
-        // If the criteria above hasn't been met, the user denied some permission. Let's present
-        // the user with a FAQ in case they want to know more and send them to the Settings screen
-        // to enable them the future there if they want to.
+        }
+        // If the criteria above hasn't been met, the user probably denied some permissions.
         else -> {
             Column {
                 val revokedPermissionsText = getPermissionsText(
                     multiplePermissionsState.revokedPermissions
                 )
-                Text(
-                    "$revokedPermissionsText denied. See this FAQ with " +
-                        "information about why we need this permission. Please, grant us " +
-                        "access on the Settings screen."
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = navigateToSettingsScreen) {
-                    Text("Open Settings")
-                }
+                Text("$revokedPermissionsText not available.")
             }
         }
     }

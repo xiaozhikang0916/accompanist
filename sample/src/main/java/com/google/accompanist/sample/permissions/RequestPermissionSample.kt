@@ -16,10 +16,7 @@
 
 package com.google.accompanist.sample.permissions
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -38,24 +35,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
+import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.sample.AccompanistSampleTheme
 
+@OptIn(ExperimentalPermissionsApi::class)
 class RequestPermissionSample : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             AccompanistSampleTheme {
+                val cameraPermissionState =
+                    rememberPermissionState(android.Manifest.permission.CAMERA)
+
+                // Track if the permission has been already requested to the user
+                // This should be saved in the data layer
+                var permissionRequested by rememberSaveable { mutableStateOf(false) }
+
                 Sample(
-                    navigateToSettingsScreen = {
-                        startActivity(
-                            Intent(
-                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.fromParts("package", packageName, null)
-                            )
-                        )
-                    }
+                    cameraPermission = cameraPermissionState,
+                    isPermissionRequested = permissionRequested,
+                    onPermissionRequest = { permissionRequested = true }
                 )
             }
         }
@@ -64,25 +65,32 @@ class RequestPermissionSample : ComponentActivity() {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun Sample(navigateToSettingsScreen: () -> Unit) {
+private fun Sample(
+    cameraPermission: PermissionState,
+    isPermissionRequested: Boolean,
+    onPermissionRequest: () -> Unit
+) {
     // Track if the user doesn't want to see the rationale any more.
     var doNotShowRationale by rememberSaveable { mutableStateOf(false) }
 
-    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
     PermissionRequired(
-        permissionState = cameraPermissionState,
-        permissionNotGrantedContent = {
+        permissionState = cameraPermission,
+        isPermissionRequested = isPermissionRequested,
+        requestPermissionContent = {
             if (doNotShowRationale) {
                 Text("Feature not available")
             } else {
                 Rationale(
                     onDoNotShowRationale = { doNotShowRationale = true },
-                    onRequestPermission = { cameraPermissionState.launchPermissionRequest() }
+                    onRequestPermission = {
+                        cameraPermission.launchPermissionRequest()
+                        onPermissionRequest()
+                    }
                 )
             }
         },
         permissionNotAvailableContent = {
-            PermissionDenied(navigateToSettingsScreen)
+            PermissionNotAvailable()
         }
     ) {
         Text("Camera permission Granted")
@@ -110,17 +118,8 @@ private fun Rationale(
 }
 
 @Composable
-private fun PermissionDenied(
-    navigateToSettingsScreen: () -> Unit
-) {
+private fun PermissionNotAvailable() {
     Column {
-        Text(
-            "Camera permission denied. See this FAQ with information about why we " +
-                "need this permission. Please, grant us access on the Settings screen."
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = navigateToSettingsScreen) {
-            Text("Open Settings")
-        }
+        Text("Camera permission not available!")
     }
 }

@@ -68,11 +68,6 @@ interface MultiplePermissionsState {
     val shouldShowRationale: Boolean
 
     /**
-     * When `true`, the [permissions] request has been done previously.
-     */
-    val permissionRequested: Boolean
-
-    /**
      * Request the [permissions] to the user.
      *
      * This should always be triggered from non-composable scope, for example, from a side-effect

@@ -22,6 +22,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -98,18 +102,24 @@ class RequestPermissionTest {
     @Composable
     private fun ComposableUnderTest() {
         val state = rememberPermissionState(android.Manifest.permission.CAMERA)
+        var permissionRequested by remember { mutableStateOf(false) }
         when {
             state.hasPermission -> {
                 Text("Granted")
             }
-            state.shouldShowRationale || !state.permissionRequested -> {
+            state.shouldShowRationale || !permissionRequested -> {
                 Column {
-                    if (state.permissionRequested) {
+                    if (permissionRequested) {
                         Text("ShowRationale")
                     } else {
                         Text("No permission")
                     }
-                    Button(onClick = { state.launchPermissionRequest() }) {
+                    Button(
+                        onClick = {
+                            state.launchPermissionRequest()
+                            permissionRequested = true
+                        }
+                    ) {
                         Text("Request")
                     }
                 }

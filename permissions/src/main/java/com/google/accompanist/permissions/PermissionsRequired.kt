@@ -23,14 +23,15 @@ import androidx.compose.runtime.Composable
  * [documentation](https://developer.android.com/training/permissions/requesting#workflow_for_requesting_permissions)
  * when a permission is *required* to be granted for [content].
  *
- * If the permission is not granted or a rationale should be shown, [permissionNotGrantedContent] will
+ * If the permission is not granted or a rationale should be shown, [requestPermissionContent] will
  * be added to Composition. If the user doesn't want to be asked for permissions again,
  * [permissionNotAvailableContent] will be added instead.
  *
  * @param permissionState required permission to be granted.
- * @param permissionNotGrantedContent content to show when the user hasn't granted the permission.
- * Requesting the permission to the user is allowed using [PermissionState.launchPermissionRequest]
- * in a side-effect or non-Composable lambda.
+ * @param isPermissionRequested whether or not this permission has been requested previously.
+ * @param requestPermissionContent content to show when the user hasn't granted the permission
+ * or the permission hasn't been requested before. Requesting the permission to the user is allowed
+ * using [PermissionState.launchPermissionRequest] in a side-effect or non-Composable lambda.
  * @param permissionNotAvailableContent content to show when the permission is not available. This
  * could be because the user doesn't want to be asked again for this permission or the permission
  * is blocked in the device. Attempting to request the permission to the user in this part of
@@ -41,7 +42,8 @@ import androidx.compose.runtime.Composable
 @Composable
 fun PermissionRequired(
     permissionState: PermissionState,
-    permissionNotGrantedContent: @Composable (() -> Unit),
+    isPermissionRequested: Boolean,
+    requestPermissionContent: @Composable (() -> Unit),
     permissionNotAvailableContent: @Composable (() -> Unit),
     content: @Composable (() -> Unit),
 ) {
@@ -49,8 +51,8 @@ fun PermissionRequired(
         permissionState.hasPermission -> {
             content()
         }
-        permissionState.shouldShowRationale || !permissionState.permissionRequested -> {
-            permissionNotGrantedContent()
+        permissionState.shouldShowRationale || !isPermissionRequested -> {
+            requestPermissionContent()
         }
         else -> {
             permissionNotAvailableContent()
@@ -64,12 +66,13 @@ fun PermissionRequired(
  * when multiple permissions are *required* to be granted for [content].
  *
  * If any permission is not granted and a rationale should be shown, or the user hasn't been
- * presented with the permissions yet, [permissionsNotGrantedContent] will be added to Composition.
+ * presented with the permissions yet, [requestPermissionsContent] will be added to Composition.
  * If the user doesn't want to be asked for permissions again, [permissionsNotAvailableContent]
  * will be added instead.
  *
  * @param multiplePermissionsState required permissions to be granted.
- * @param permissionsNotGrantedContent content to show when the user hasn't granted all permissions.
+ * @param arePermissionsRequested whether or not these permissions have been requested previously.
+ * @param requestPermissionsContent content to show when the user hasn't granted all permissions.
  * Requesting the permissions to the user is allowed using
  * [MultiplePermissionsState.launchMultiplePermissionRequest] in a side-effect or
  * non-Composable lambda.
@@ -83,7 +86,8 @@ fun PermissionRequired(
 @Composable
 fun PermissionsRequired(
     multiplePermissionsState: MultiplePermissionsState,
-    permissionsNotGrantedContent: @Composable (() -> Unit),
+    arePermissionsRequested: Boolean,
+    requestPermissionsContent: @Composable (() -> Unit),
     permissionsNotAvailableContent: @Composable (() -> Unit),
     content: @Composable (() -> Unit),
 ) {
@@ -91,11 +95,9 @@ fun PermissionsRequired(
         multiplePermissionsState.allPermissionsGranted -> {
             content()
         }
-        multiplePermissionsState.shouldShowRationale ||
-            !multiplePermissionsState.permissionRequested ->
-            {
-                permissionsNotGrantedContent()
-            }
+        multiplePermissionsState.shouldShowRationale || !arePermissionsRequested -> {
+            requestPermissionsContent()
+        }
         else -> {
             permissionsNotAvailableContent()
         }

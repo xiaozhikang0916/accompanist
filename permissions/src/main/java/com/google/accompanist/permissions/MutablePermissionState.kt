@@ -54,7 +54,6 @@ internal fun rememberMutablePermissionState(
     // Remember RequestPermission launcher and assign it to permissionState
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         permissionState.hasPermission = it
-        permissionState.permissionRequested = true
     }
     DisposableEffect(permissionState, launcher) {
         permissionState.launcher = launcher
@@ -95,8 +94,6 @@ internal class MutablePermissionState(
         activity.shouldShowRationale(permission)
     )
         private set
-
-    override var permissionRequested: Boolean by mutableStateOf(false)
 
     override fun launchPermissionRequest() {
         launcher?.launch(

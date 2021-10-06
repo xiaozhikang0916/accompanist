@@ -23,6 +23,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
@@ -49,15 +53,23 @@ class PermissionsTestActivity : ComponentActivity() {
                 Text("PermissionsTestActivity")
 
                 val state = rememberPermissionState(Manifest.permission.CAMERA)
+                var permissionRequested by remember { mutableStateOf(false) }
+
                 PermissionRequired(
                     permissionState = state,
-                    permissionNotGrantedContent = {
-                        if (state.permissionRequested) {
+                    isPermissionRequested = permissionRequested,
+                    requestPermissionContent = {
+                        if (permissionRequested) {
                             Text("ShowRationale")
                         } else {
                             Text("No permission")
                         }
-                        Button(onClick = { state.launchPermissionRequest() }) {
+                        Button(
+                            onClick = {
+                                state.launchPermissionRequest()
+                                permissionRequested = true
+                            }
+                        ) {
                             Text("Request")
                         }
                     },

@@ -25,6 +25,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -218,6 +222,8 @@ class MultipleAndSinglePermissionsTest {
         requestSinglePermission: Boolean = false
     ) {
         val state = rememberMultiplePermissionsState(permissions)
+        var permissionsRequested by remember { mutableStateOf(false) }
+
         Column {
             Text("MultipleAndSinglePermissionsTest")
             Spacer(Modifier.height(16.dp))
@@ -225,9 +231,9 @@ class MultipleAndSinglePermissionsTest {
                 state.allPermissionsGranted -> {
                     Text("Granted")
                 }
-                state.shouldShowRationale || !state.permissionRequested -> {
+                state.shouldShowRationale || !permissionsRequested -> {
                     Column {
-                        if (state.permissionRequested) {
+                        if (permissionsRequested) {
                             Text("ShowRationale")
                         } else {
                             Text("No permission")
@@ -236,12 +242,13 @@ class MultipleAndSinglePermissionsTest {
                             onClick = {
                                 if (
                                     requestSinglePermission &&
-                                    state.permissionRequested &&
+                                    permissionsRequested &&
                                     state.revokedPermissions.size == 1
                                 ) {
                                     state.revokedPermissions[0].launchPermissionRequest()
                                 } else {
                                     state.launchMultiplePermissionRequest()
+                                    permissionsRequested = true
                                 }
                             }
                         ) {
