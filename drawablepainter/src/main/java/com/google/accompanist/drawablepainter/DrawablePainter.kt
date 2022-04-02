@@ -16,6 +16,8 @@
 
 package com.google.accompanist.drawablepainter
 
+import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
@@ -33,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -170,7 +173,40 @@ fun rememberDrawablePainter(drawable: Drawable?): Painter = remember(drawable) {
     }
 }
 
+/**
+ * Remembers [Drawable] wrapped up as a [Painter]. This function attempts to un-wrap the
+ * drawable contents and use Compose primitives where possible.
+ *
+ * If the provided [drawable] is `null`, an empty no-op painter is returned.
+ *
+ * This function tries to dispatch lifecycle events to [drawable] as much as possible from
+ * within Compose.
+ *
+ * @sample com.google.accompanist.sample.drawablepainter.BasicSample
+ */
+@Composable
+fun rememberDrawablePainterFix(drawable: Drawable?): Painter = remember(drawable) {
+    when (drawable) {
+        null -> EmptyPainter
+        is BitmapDrawable -> BitmapPainter(drawable.asScaledImageBitmap())
+        is ColorDrawable -> ColorPainter(Color(drawable.color))
+        // Since the DrawablePainter will be remembered and it implements RememberObserver, it
+        // will receive the necessary events
+        else -> DrawablePainter(drawable.mutate())
+    }
+}
+
 internal object EmptyPainter : Painter() {
     override val intrinsicSize: Size get() = Size.Unspecified
     override fun DrawScope.onDraw() {}
+}
+
+fun BitmapDrawable.asScaledImageBitmap(): ImageBitmap {
+    val matrix = Matrix()
+    val xScale = this.intrinsicWidth.toFloat() / this.bitmap.width
+    val yScale = this.intrinsicHeight.toFloat() / this.bitmap.height
+    matrix.postScale(xScale, yScale)
+    val bitmap =
+        Bitmap.createBitmap(this.bitmap, 0, 0, this.bitmap.width, this.bitmap.height, matrix, false)
+    return bitmap.asImageBitmap()
 }

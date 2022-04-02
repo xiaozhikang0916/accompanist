@@ -18,9 +18,11 @@ package com.google.accompanist.sample.drawablepainter
 
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import com.google.accompanist.drawablepainter.rememberDrawablePainterFix
 import com.google.accompanist.sample.R
 
 @Composable
@@ -31,4 +33,22 @@ fun BasicSample() {
         painter = rememberDrawablePainter(drawable = drawable),
         contentDescription = "content description",
     )
+}
+
+@Composable
+fun ResSample() {
+    val drawable = AppCompatResources.getDrawable(LocalContext.current, R.drawable.test)
+
+    Column {
+
+        Image(
+            painter = rememberDrawablePainter(drawable = drawable),
+            contentDescription = "content description",
+        )
+
+        Image(
+            painter = rememberDrawablePainterFix(drawable = drawable),
+            contentDescription = "content description",
+        )
+    }
 }

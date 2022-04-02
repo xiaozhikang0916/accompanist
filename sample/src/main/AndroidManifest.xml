@@ -381,6 +381,15 @@
                 <category android:name="com.google.accompanist.sample.SAMPLE_CODE" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".drawablepainter.DensityDrawableSample"
+            android:label="@string/drawable_density_title"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="com.google.accompanist.sample.SAMPLE_CODE" />
+            </intent-filter>
+        </activity>
 
     </application>
 
