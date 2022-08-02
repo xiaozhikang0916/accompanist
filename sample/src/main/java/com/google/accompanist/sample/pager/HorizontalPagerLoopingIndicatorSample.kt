@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -90,6 +92,9 @@ private fun Sample() {
                 return (index - startIndex).floorMod(pageCount)
             }
 
+            var underDragging by remember {
+                mutableStateOf(false)
+            }
             HorizontalPager(
                 // Set the raw page count to a really large number
                 count = loopingCount,
@@ -101,6 +106,18 @@ private fun Sample() {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                underDragging = true
+                                try {
+                                    awaitRelease()
+                                } finally {
+                                    underDragging = false
+                                }
+                            }
+                        )
+                    }
             ) { index ->
                 // We calculate the page from the given index
                 val page = pageMapper(index)
@@ -132,19 +149,12 @@ private fun Sample() {
                 infiniteLoop = true
             )
 
-            var underDragging by remember {
-                mutableStateOf(false)
-            }
-
             LaunchedEffect(key1 = Unit) {
                 pagerState.interactionSource.interactions.collect { interaction ->
-                    when (interaction) {
-                        is PressInteraction.Press -> underDragging = true
-                        is PressInteraction.Release -> underDragging = false
-                        is PressInteraction.Cancel -> underDragging = false
-                        is DragInteraction.Start -> underDragging = true
-                        is DragInteraction.Stop -> underDragging = false
-                        is DragInteraction.Cancel -> underDragging = false
+                    underDragging = when (interaction) {
+                        is PressInteraction.Press ->  true
+                        is DragInteraction.Start ->  true
+                        else ->  false
                     }
                 }
             }
